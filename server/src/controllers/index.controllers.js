@@ -1,7 +1,9 @@
 import Stripe from "stripe";
 import { STRIPE_API_KEY } from "../config.js";
 import Customer from "../models/customer.model.js";
-import bcrypt from "bcrypt"
+import bcrypt from "bcrypt";
+import validate from "validate.js";
+import registerConstraints from "../helpers/registerValidations.js";
 
 const stripe = new Stripe(STRIPE_API_KEY);
 
@@ -15,14 +17,30 @@ export const registerCustomer = async (req, res) => {
 
     try {
         // Validations
-        const emailUsed = await Customer.findOne({email});
-        if (emailUsed) {
+        const emailUsed = await Customer.findOne({ email });
+        const registerVal = validate({ email, password }, registerConstraints);
+
+        if (registerVal || emailUsed) {
+            let validationErrors = {};
+
+            if (emailUsed) {
+                validationErrors.email = ["Email already exists"]
+            };
+
+            if (registerVal) {
+                validationErrors = {
+                    ...validationErrors,
+                    ...registerVal
+                };
+            };
+
             return res.status(409).send({
                 status: false,
-                message: "Sorry, email is already used"
+                message: validationErrors
             });
         };
 
+        // Getting customer id from stripe
         const { id } = await stripe.customers.create({
             email
         });
@@ -34,8 +52,10 @@ export const registerCustomer = async (req, res) => {
             });
         };
 
+        // Encrypting password
         const encryptedPass = await encryptPass(password);
 
+        // Saving customer in DB
         const newCustomer = new Customer({ email, password: encryptedPass, customerId: id });
         await newCustomer.save();
 
