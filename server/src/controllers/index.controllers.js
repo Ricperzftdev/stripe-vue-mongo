@@ -1,15 +1,47 @@
 import Stripe from "stripe";
 import { STRIPE_API_KEY } from "../config.js";
+import Customer from "../models/customer.model.js";
+import bcrypt from "bcrypt"
 
 const stripe = new Stripe(STRIPE_API_KEY);
 
+const encryptPass = async (plainText) => {
+    const hash = await bcrypt.hash(plainText, 10);
+    return hash;
+}
+
 export const registerCustomer = async (req, res) => {
-    const { email } = req.body;
-    const customerData = await stripe.customers.create({
-        email
-    });
-    
-    res.send({ customerData })
+    const { email, password } = req.body;
+
+    try {
+        const { id } = await stripe.customers.create({
+            email
+        });
+
+        if (!id) {
+            return res.status(400).send({
+                status: false,
+                message: "Unexpected error"
+            });
+        };
+
+        const encryptedPass = await encryptPass(password);
+
+        const newCustomer = new Customer({ email, password: encryptedPass, customerId: id });
+        await newCustomer.save();
+
+        res.send({
+            status: true,
+            message: "New customer added",
+            newCustomer
+        });
+
+    } catch (error) {
+        res.status(400).send({
+            status: false,
+            message: error
+        })
+    }
 };
 
 export const getAllCustomers = async (req, res) => {
@@ -26,8 +58,8 @@ export const buySubscription = async (req, res) => {
         return res.status(401).send({
             status: false,
             message: "Required credentials"
-        })
-    }
+        });
+    };
 
     try {
         const subscription = await stripe.subscriptions.create({
@@ -46,14 +78,13 @@ export const buySubscription = async (req, res) => {
                 status: true,
                 message: subscription.latest_invoice.payment_intent.client_secret
             })
-        }
+        };
 
-        
     } catch (error) {
         res.status(400).send({
             status: false,
             message: error
-        })
+        });
     }
 };
 
