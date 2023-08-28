@@ -8,12 +8,21 @@ const stripe = new Stripe(STRIPE_API_KEY);
 const encryptPass = async (plainText) => {
     const hash = await bcrypt.hash(plainText, 10);
     return hash;
-}
+};
 
 export const registerCustomer = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        // Validations
+        const emailUsed = await Customer.findOne({email});
+        if (emailUsed) {
+            return res.status(409).send({
+                status: false,
+                message: "Sorry, email is already used"
+            });
+        };
+
         const { id } = await stripe.customers.create({
             email
         });
@@ -40,7 +49,7 @@ export const registerCustomer = async (req, res) => {
         res.status(400).send({
             status: false,
             message: error
-        })
+        });
     }
 };
 
