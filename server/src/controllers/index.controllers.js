@@ -73,12 +73,6 @@ export const registerCustomer = async (req, res) => {
     }
 };
 
-export const getAllCustomers = async (req, res) => {
-    const customers = await stripe.customers.list();
-
-    res.send({ customers })
-};
-
 export const buySubscription = async (req, res) => {
     const { customerId } = req.body;
     const subscriptionId = "price_1NjoDeBQtqlM2yznsh5K5nM4";
