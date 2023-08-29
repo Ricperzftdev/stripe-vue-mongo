@@ -1,4 +1,4 @@
-import {Schema, model} from "mongoose"
+import { Schema, model } from "mongoose"
 
 const subscriptionSchema = new Schema({
     id: {
@@ -12,6 +12,13 @@ const subscriptionSchema = new Schema({
     },
     price: {
         type: Number
+    }
+}, {
+    toJSON: {
+        transform: function (doc, ret) {
+            delete ret._id;
+            return ret;
+        }
     }
 });
 

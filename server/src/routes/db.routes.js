@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {saveSubscription} from "../functions/get&SaveSubscriptions.js";
+import { saveSubscription } from "../controllers/db.controllers.js";
 
 const dbRouter = Router();
 

@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { STRIPE_API_KEY } from "../config.js";
 import Customer from "../models/customer.model.js";
+import Subscription from "../models/subscription.model.js";
 import bcrypt from "bcrypt";
 import validate from "validate.js";
 import registerConstraints from "../helpers/registerValidations.js";
@@ -73,6 +74,24 @@ export const registerCustomer = async (req, res) => {
     }
 };
 
+export const getSubscriptions = async (req, res) => {
+    try {
+        const subscriptions = await Subscription.find({});
+
+        res.send({
+            status: true,
+            message: "Successful request",
+            subscriptions
+        });
+
+    } catch (error) {
+        res.status(400).send({
+            status: false,
+            error
+        });
+    }
+};
+
 export const buySubscription = async (req, res) => {
     const { customerId } = req.body;
     const subscriptionId = "price_1NjoDeBQtqlM2yznsh5K5nM4";
@@ -106,7 +125,7 @@ export const buySubscription = async (req, res) => {
     } catch (error) {
         res.status(400).send({
             status: false,
-            message: error
+            error
         });
     }
 };
